@@ -1,0 +1,18 @@
+[package]
+name = "offline-ml"
+description = "Offline ML but with a REST API that's not Offline"
+version = "0.1.0"
+authors = ["Daniel Bank <daniel.p.bank@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+futures = "0.1"
+gotham = "0.4.0"
+hyper = "0.12"
+image = "0.22.2"
+mime = "0.3"
+tract-core = "0.4.0"
+tract-tensorflow = "0.4.0"
+url = "2.1.0"
