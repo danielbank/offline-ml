@@ -1,21 +1,14 @@
-extern crate futures;
-extern crate gotham;
-extern crate hyper;
-extern crate mime;
-extern crate url;
-
 use futures::{future, Future, Stream};
-use hyper::{Body, StatusCode};
-
 use gotham::handler::{HandlerFuture, IntoHandlerError};
 use gotham::helpers::http::response::create_response;
 use gotham::router::builder::{build_simple_router, DefineSingleRoute, DrawRoutes};
 use gotham::router::Router;
 use gotham::state::{FromState, State};
+use hyper::{Body, StatusCode};
+use image;
+use mime;
 use regex::bytes::Regex;
-
-use tract_core::ndarray;
-use tract_core::prelude::*;
+use tract_core::{ndarray, prelude::*};
 
 /// Extracts the image from a POST request and responds with a prediction tuple (probability, class)
 fn prediction_handler(mut state: State) -> Box<HandlerFuture> {
