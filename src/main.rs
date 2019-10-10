@@ -10,12 +10,28 @@ use mime;
 use regex::bytes::Regex;
 use tract_core::{ndarray, prelude::*};
 
+/// extract the image from the body as input
+fn get_image(valid_body: hyper::Chunk) -> image::RgbImage {
+    let body_content = valid_body.into_bytes();
+    let re = Regex::new(r"\r\n\r\n").unwrap();
+    let contents: Vec<_> = re.split(body_content.as_ref()).collect();
+    let image = image::load_from_memory(contents[1]).unwrap().to_rgb();
+    image::imageops::resize(&image, 224, 224, ::image::FilterType::Triangle)
+}
+
 /// Extracts the image from a POST request and responds with a prediction tuple (probability, class)
 fn prediction_handler(mut state: State) -> Box<HandlerFuture> {
     let f = Body::take_from(&mut state)
         .concat2()
         .then(|full_body| match full_body {
             Ok(valid_body) => {
+                let image = get_image(valid_body);
+                let image: Tensor =
+                    ndarray::Array4::from_shape_fn((1, 224, 224, 3), |(_, y, x, c)| {
+                        image[(x as _, y as _)][c] as f32 / 255.0
+                    })
+                    .into();
+
                 // load the model
                 let mut model = tract_tensorflow::tensorflow()
                     .model_for_path("mobilenet_v2_1.4_224_frozen.pb")
@@ -32,19 +48,6 @@ fn prediction_handler(mut state: State) -> Box<HandlerFuture> {
                 // optimize the model and get an execution plan
                 let model = model.into_optimized().unwrap();
                 let plan = SimplePlan::new(&model).unwrap();
-
-                // extract the image from the body as input
-                let body_content = valid_body.into_bytes();
-                let re = Regex::new(r"\r\n\r\n").unwrap();
-                let contents: Vec<_> = re.split(body_content.as_ref()).collect();
-                let image = image::load_from_memory(contents[1]).unwrap().to_rgb();
-                let resized =
-                    image::imageops::resize(&image, 224, 224, ::image::FilterType::Triangle);
-                let image: Tensor =
-                    ndarray::Array4::from_shape_fn((1, 224, 224, 3), |(_, y, x, c)| {
-                        resized[(x as _, y as _)][c] as f32 / 255.0
-                    })
-                    .into();
 
                 // run the plan on the input
                 let result = plan.run(tvec!(image)).unwrap();
