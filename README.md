@@ -30,7 +30,3 @@ curl -i  -X POST -F "image=@<IMAGE_PATH>" http://127.0.0.1:7878/
 ```
 
 The returned value is a tuple: (score, class). Score is a value between 0 and 1 signifying the model's confidence that the given class is in the image. Class is the line number associated with the predicted class in the [classes text file](./imagenet_slim_labels.txt).
-
-## License
-
-[MIT License](LICENSE)
